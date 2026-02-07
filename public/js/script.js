@@ -98,9 +98,45 @@ function moveNoButtonRandomly() {
     const margin = 20; // keep a margin from edges
     const maxLeft = Math.max(0, window.innerWidth - btnRect.width - margin);
     const maxTop = Math.max(0, window.innerHeight - btnRect.height - margin);
+    const yesRect = yes_button.getBoundingClientRect();
 
-    const left = Math.floor(Math.random() * maxLeft) + margin;
-    const top = Math.floor(Math.random() * maxTop) + margin;
+    function rectsOverlap(r1, r2) {
+        return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
+    }
+
+    // Try to find a position that doesn't overlap the Yes button
+    const maxAttempts = 30;
+    let attempt = 0;
+    let left, top, candidateRect;
+    do {
+        left = Math.floor(Math.random() * maxLeft) + margin;
+        top = Math.floor(Math.random() * maxTop) + margin;
+
+        candidateRect = {
+            left: left,
+            top: top,
+            right: left + btnRect.width,
+            bottom: top + btnRect.height
+        };
+
+        attempt++;
+    } while (attempt < maxAttempts && rectsOverlap(candidateRect, yesRect));
+
+    // If after many attempts we still overlap, try to place the No button on the opposite side
+    if (rectsOverlap(candidateRect, yesRect)) {
+        // Prefer left or right side depending on yes button position
+        if (yesRect.left > window.innerWidth / 2) {
+            left = margin; // put No on left side
+        } else {
+            left = Math.max(margin, window.innerWidth - btnRect.width - margin); // put No on right
+        }
+        // Put vertically away from yes button
+        if (yesRect.top > window.innerHeight / 2) {
+            top = margin;
+        } else {
+            top = Math.max(margin, window.innerHeight - btnRect.height - margin);
+        }
+    }
 
     no_button.style.left = `${left}px`;
     no_button.style.top = `${top}px`;
